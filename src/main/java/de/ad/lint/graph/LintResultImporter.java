@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Transaction;
 import org.xml.sax.SAXException;
 
 class LintResultImporter {
@@ -21,12 +20,6 @@ class LintResultImporter {
       throws IOException, SAXException, ParserConfigurationException {
     List<Issue> issues = parser.parse(lintResultXml);
 
-    try (Transaction tx = database.beginTx()) {
-      for (Issue issue : issues) {
-        database.createNode().setProperty("id", issue.getId());
-      }
-
-      tx.success();
-    }
+    GraphBuilder.build(database, issues);
   }
 }
