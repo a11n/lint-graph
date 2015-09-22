@@ -25,7 +25,9 @@ class GraphBuilder {
 
   private static void buildGraph(GraphDatabaseService database, List<Issue> issues) {
     for (Issue issue : issues) {
-      Node issueNode = database.createNode(ISSUE);
+      Label severity = DynamicLabel.label(issue.getSeverity());
+      
+      Node issueNode = database.createNode(ISSUE, severity);
       issueNode.setProperty("id", issue.getId());
       issueNode.setProperty("severity", issue.getSeverity());
       issueNode.setProperty("message", issue.getMessage());
