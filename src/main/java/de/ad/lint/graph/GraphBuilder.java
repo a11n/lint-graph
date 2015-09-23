@@ -7,13 +7,13 @@ import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 
 class GraphBuilder {
   private static final Label ISSUE = DynamicLabel.label("Issue");
   private static final Label FILE = DynamicLabel.label("File");
-  private static final Label VIOLATION = DynamicLabel.label("Violation");
 
   private GraphBuilder() {
   }
@@ -49,24 +49,31 @@ class GraphBuilder {
         fileNode = database.createNode(FILE);
         fileNode.setProperty("file", location.getFile());
       }
-      
-      //Node violationNode = database.createNode(VIOLATION);
-      //violationNode.setProperty("line", location.getLine());
-      //violationNode.setProperty("column", location.getColumn());
-      //violationNode.setProperty("message", issue.getMessage());
-      //violationNode.setProperty("errorLine1", issue.getErrorLine1());
-      //violationNode.setProperty("errorLine2", issue.getErrorLine2());
 
-      issueNode.createRelationshipTo(fileNode, Relationship.AFFECTS);
-      fileNode.createRelationshipTo(issueNode, Relationship.IS_AFFECTED_BY);
-      
+      if (!nodes.containsKey(issue.getId())) {
+        issueNode.createRelationshipTo(fileNode, Relationships.AFFECTS);
+      }
+
+      if (!nodes.containsKey(location.getFile())) {
+        fileNode.createRelationshipTo(issueNode, Relationships.IS_AFFECTED_BY);
+      }
+
+      Relationship violatesRelation =
+          fileNode.createRelationshipTo(issueNode, Relationships.VIOLATES);
+      violatesRelation.setProperty("line", location.getLine());
+      violatesRelation.setProperty("column", location.getColumn());
+      violatesRelation.setProperty("message", issue.getMessage());
+      violatesRelation.setProperty("errorLine1", issue.getErrorLine1());
+      violatesRelation.setProperty("errorLine2", issue.getErrorLine2());
+
       nodes.put(issue.getId(), issueNode);
       nodes.put(location.getFile(), fileNode);
     }
   }
 
-  private enum Relationship implements RelationshipType {
+  private enum Relationships implements RelationshipType {
     AFFECTS,
-    IS_AFFECTED_BY
+    IS_AFFECTED_BY,
+    VIOLATES
   }
 }
